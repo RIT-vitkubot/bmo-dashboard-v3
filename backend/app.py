@@ -1,19 +1,23 @@
-from flask import Flask, jsonify, send_from_directory, request
-from flask_cors import CORS
 import json
 import psutil
 import os
 import sqlite3
 import datetime
 import time
+import subprocess
+import re
+import random
 import caldav
 from caldav.elements import dav
+from flask import Flask, jsonify, send_from_directory, request
+from flask_cors import CORS
 
 app = Flask(__name__, static_folder='../frontend/dist')
 CORS(app)
 
 DB_PATH = os.path.join(os.path.dirname(__file__), 'bmo_dashboard.db')
 AUTH_PATH = os.path.join(os.path.dirname(__file__), 'calendar_auth.json')
+REPO_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 
 def get_db_connection():
     conn = sqlite3.connect(DB_PATH)
@@ -35,11 +39,37 @@ def init_db():
     conn.commit()
     conn.close()
 
+def check_git_automation():
+    """Checks git log for #complete <id> and updates database."""
+    try:
+        # Get last 10 commits
+        output = subprocess.check_output(
+            ['git', 'log', '-n', '10', '--pretty=format:%s'],
+            cwd=REPO_PATH,
+            stderr=subprocess.STDOUT
+        ).decode('utf-8')
+        
+        matches = re.findall(r'#complete\s+(\d+)', output, re.IGNORECASE)
+        if matches:
+            conn = get_db_connection()
+            for activity_id in matches:
+                conn.execute('''
+                    UPDATE activities 
+                    SET status = "Completed", last_updated = ?
+                    WHERE id = ? AND status != "Completed"
+                ''', (datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), activity_id))
+            conn.commit()
+            conn.close()
+    except Exception as e:
+        print(f"Git automation error: {e}")
+
 init_db()
+check_git_automation()
 
 @app.route('/api/tasks', methods=['GET'])
 @app.route('/api/activities', methods=['GET'])
 def get_activities():
+    check_git_automation()
     try:
         conn = get_db_connection()
         activities = conn.execute('SELECT * FROM activities').fetchall()
@@ -121,8 +151,30 @@ def get_stats():
 
 @app.route('/api/bmo-says', methods=['GET'])
 def bmo_says():
+    # Logic based on uptime and active tasks
+    uptime_hours = (time.time() - psutil.boot_time()) / 3600
+    
+    conn = get_db_connection()
+    active_count = conn.execute('SELECT COUNT(*) FROM activities WHERE status = "Active"').fetchone()[0]
+    conn.close()
+
+    messages = [
+        "Vítku, system is running smoothly. Phase 3: Intelligence is here! 🤖✨",
+        "BMO is observing your progress. Keep going!",
+        "Internal circuits are optimal. No errors found.",
+        "Remember to stay hydrated while coding! 🥤"
+    ]
+
+    if active_count > 3:
+        messages.append(f"Whoa, {active_count} active tasks? You're a machine, Vítku!")
+    elif active_count == 0:
+        messages.append("All tasks cleared! Time for a video game? 🎮")
+
+    if uptime_hours > 24:
+        messages.append(f"Server has been running for {int(uptime_hours)} hours. Rock solid! 💪")
+
     return jsonify({
-        "message": "Vítku, system is running smoothly. Phase 2: The Heart is now pulsing! 🤖💓"
+        "message": random.choice(messages)
     })
 
 @app.route('/api/calendar', methods=['GET'])
@@ -147,6 +199,7 @@ def get_calendar():
         
         all_events = []
         for calendar in calendars:
+            cal_name = calendar.name
             events = calendar.date_search(start=now, end=end, expand=True)
             for event in events:
                 vobj = event.vobject_instance.vevent
@@ -171,13 +224,14 @@ def get_calendar():
                     "title": summary,
                     "time": start_time,
                     "allDay": is_all_day,
+                    "calendar": cal_name,
                     "sort_key": sort_key
                 })
 
         # Sort by time and take top 10 (Frontend will slice to 3-4)
         all_events.sort(key=lambda x: x['sort_key'])
         
-        # Remove duplicates (sometimes multiple calendars or weird iCloud things)
+        # Remove duplicates
         seen = set()
         unique_events = []
         for e in all_events:

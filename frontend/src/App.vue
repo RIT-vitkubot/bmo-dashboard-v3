@@ -46,7 +46,7 @@ const fetchCalendar = async () => {
 const formatDate = (dateString) => {
   if (!dateString) return ''
   const date = new Date(dateString)
-  if (isNaN(date.getTime())) return dateString // Fallback to raw string if invalid
+  if (isNaN(date.getTime())) return dateString 
   const pad = (num) => String(num).padStart(2, '0')
   const yyyy = date.getFullYear()
   const mm = pad(date.getMonth() + 1)
@@ -56,13 +56,35 @@ const formatDate = (dateString) => {
   return `${yyyy}-${mm}-${dd} ${hh}:${min}`
 }
 
+const getCalColor = (calName) => {
+  if (!calName) return 'text-blue-400'
+  const name = calName.toLowerCase()
+  if (name.includes('❤') || name.includes('srdce') || name.includes('love')) return 'text-red-400'
+  if (name.includes('tul')) return 'text-blue-400'
+  if (name.includes('moe')) return 'text-green-400'
+  return 'text-purple-400'
+}
+
+const getCalBorder = (calName) => {
+  if (!calName) return 'hover:border-blue-500/30'
+  const name = calName.toLowerCase()
+  if (name.includes('❤') || name.includes('srdce') || name.includes('love')) return 'hover:border-red-500/30'
+  if (name.includes('tul')) return 'hover:border-blue-500/30'
+  if (name.includes('moe')) return 'hover:border-green-500/30'
+  return 'hover:border-purple-500/30'
+}
+
 onMounted(() => {
   fetchTasks()
   fetchStats()
   fetchBmoSays()
   fetchCalendar()
-  setInterval(fetchStats, 5000)
-  setInterval(fetchCalendar, 300000) // 5 minutes
+  
+  // Polling intervals per requirements
+  setInterval(fetchStats, 5000)      // stats 5s
+  setInterval(fetchTasks, 30000)     // activities 30s
+  setInterval(fetchCalendar, 300000) // calendar 5min
+  setInterval(fetchBmoSays, 60000)    // BMO says 1min
 })
 </script>
 
@@ -73,7 +95,7 @@ onMounted(() => {
       <div class="glass rounded-2xl p-6 flex items-center space-x-4">
         <div class="text-4xl">🤖</div>
         <div>
-          <h1 class="text-xl font-semibold">BMO Status Monitor</h1>
+          <h1 class="text-xl font-semibold text-gray-100">BMO Status Monitor <span class="text-[10px] bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded ml-2 uppercase tracking-widest">v3.1 Intelligence</span></h1>
           <p class="text-gray-400 italic">"{{ bmoMessage || 'Initializing BMO internal systems...' }}"</p>
         </div>
       </div>
@@ -87,8 +109,9 @@ onMounted(() => {
       </div>
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div v-for="event in calendarEvents.slice(0, 4)" :key="event.title + event.time" 
-             class="glass rounded-xl p-4 border border-white/5 hover:border-blue-500/30 transition-all">
-          <p class="text-[10px] font-bold text-blue-400 uppercase mb-1">{{ event.time }}</p>
+             class="glass rounded-xl p-4 border border-white/5 transition-all"
+             :class="getCalBorder(event.calendar)">
+          <p class="text-[10px] font-bold uppercase mb-1" :class="getCalColor(event.calendar)">{{ event.time }}</p>
           <h3 class="text-sm font-medium text-gray-200 truncate">{{ event.title }}</h3>
         </div>
       </div>
@@ -151,10 +174,11 @@ onMounted(() => {
           <div class="space-y-4">
             <div class="flex items-center justify-between px-2 border-b border-white/5 pb-2">
               <h3 class="text-xs font-bold text-gray-500 uppercase">Pending</h3>
-              <span class="text-xs bg-white/10 px-2 py-0.5 rounded-full text-gray-400 font-mono">{{ tasks.filter(t => t.status === 'ToDo').length }}</span>
+              <span class="text-xs bg-white/10 px-2 py-0.5 rounded-full text-gray-400 font-mono">{{ tasks.filter(t => t.status === 'Pending').length }}</span>
             </div>
             <div v-for="task in tasks.filter(t => t.status === 'Pending')" :key="task.id" 
-                 class="glass rounded-xl p-4 border border-white/5 group hover:border-white/20 transition-all flex flex-col gap-2">
+                 class="glass rounded-xl p-4 border border-white/5 group hover:border-white/20 transition-all flex flex-col gap-2 relative">
+              <span class="absolute top-2 right-2 text-[8px] font-mono text-gray-700">#{{ task.id }}</span>
               <h4 class="text-sm font-medium text-gray-200">{{ task.title }}</h4>
               <p class="text-xs text-gray-500 leading-relaxed">{{ task.description }}</p>
               <div class="flex items-center mt-1">
@@ -170,7 +194,8 @@ onMounted(() => {
               <span class="text-xs bg-blue-500/20 px-2 py-0.5 rounded-full text-blue-400 font-mono">{{ tasks.filter(t => t.status === 'Active').length }}</span>
             </div>
             <div v-for="task in tasks.filter(t => t.status === 'Active')" :key="task.id" 
-                 class="glass rounded-xl p-4 border border-blue-500/30 shadow-[0_0_15px_rgba(59,130,246,0.1)] group hover:bg-blue-500/5 transition-all flex flex-col gap-2">
+                 class="glass rounded-xl p-4 border border-blue-500/30 shadow-[0_0_15px_rgba(59,130,246,0.1)] group hover:bg-blue-500/5 transition-all flex flex-col gap-2 relative">
+              <span class="absolute top-2 right-2 text-[8px] font-mono text-blue-900/50">#{{ task.id }}</span>
               <h4 class="font-semibold text-sm text-blue-50">{{ task.title }}</h4>
               <p class="text-xs text-blue-200/60 leading-relaxed">{{ task.description }}</p>
               <div class="pt-1">
@@ -191,7 +216,8 @@ onMounted(() => {
               <span class="text-xs bg-green-500/10 px-2 py-0.5 rounded-full text-green-500/50 font-mono">{{ tasks.filter(t => t.status === 'Completed').length }}</span>
             </div>
             <div v-for="task in tasks.filter(t => t.status === 'Completed')" :key="task.id" 
-                 class="glass rounded-xl p-4 border border-white/5 opacity-50 hover:opacity-100 transition-all flex flex-col gap-2">
+                 class="glass rounded-xl p-4 border border-white/5 opacity-50 hover:opacity-100 transition-all flex flex-col gap-2 relative">
+              <span class="absolute top-2 right-2 text-[8px] font-mono text-gray-800">#{{ task.id }}</span>
               <h4 class="text-sm text-gray-300 flex items-center font-medium">
                 <span class="mr-2 text-green-500/50 text-xs">✓</span>
                 {{ task.title }}
