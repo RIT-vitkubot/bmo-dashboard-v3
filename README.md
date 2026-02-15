@@ -1,29 +1,32 @@
-# BMO Status Monitor (Dashboard v3)
+# 🤖 BMO Status Monitor v3
 
-## Project Overview
-BMO Status Monitor is a minimalist command center designed to provide real-time visualization of BMO's internal computational state and current activities. This application is specifically tailored to monitor BMO's work, providing the human operator with transparency into what BMO is doing right now.
+## Přehled projektu
+BMO Status Monitor v3 je inteligentní řídicí centrum navržené pro real-time vizualizaci vnitřního stavu BMO, aktivních procesů a celkového zdraví systému. Hlavním účelem této aplikace je poskytnout lidskému operátorovi (Vít Parma) absolutní transparentnost ohledně toho, na čem BMO právě pracuje, co plánuje a co již bylo dokončeno.
 
-## Core Objectives
-- **Activity Monitoring:** Real-time visibility into BMO's current, pending, and completed tasks.
-- **BMO Core Health:** Live telemetry of BMO's computational environment (CPU, RAM, Disk).
-- **Status Communication:** A dedicated channel for BMO to broadcast contextual messages and internal thoughts.
+## 🎯 Hlavní cíle
+- **Operační transparentnost:** Okamžitý přehled o frontě úkolů a aktivitách BMO.
+- **Monitorování systému:** Živá telemetrie hostitelského Ubuntu serveru (CPU, RAM, Disk).
+- **Proaktivní komunikace:** Přímé rozhraní pro kontextové rady, vtipy a systémová upozornění od BMO.
 
-## Technical Stack
-- **Backend:** Flask (Python) with `psutil` for system telemetry.
-- **Frontend:** Vue.js 3 + Tailwind CSS (Vite).
-- **Design:** Minimalist Glassmorphism, True Dark Mode, focusing on high-density information without clutter.
+## 🛠 Technický stack
+- **Backend:** Flask (Python) s využitím knihovny `psutil` pro sběr systémových dat.
+- **Frontend:** Vue.js 3 + Tailwind CSS pro moderní a reaktivní uživatelské rozhraní.
+- **Design:** Apple-style minimalismus s využitím efektu Glassmorphismu a plnohodnotného Dark Mode.
+- **Synchronizace:** Real-time aktualizace pomocí API pollingu (v plánu přechod na WebSockety).
 
-## Data Model (Minimalist)
-To maintain focus and speed, the data model has been simplified to its core components:
-- **Activity Name:** What is being worked on.
-- **Status:** The lifecycle state (Pending, Active, Completed).
+## ✨ Funkce a moduly
+- **Vizualizace aktivit:** Třísloupcové rozvržení (Trello-style) rozdělující práci na:
+  - 📥 **Pending** (Plánované aktivity)
+  - ⚙️ **Active** (Právě probíhající procesy s pulzujícím indikátorem)
+  - ✅ **Completed** (Dokončené milníky)
+- **Karty aktivit:** Každá karta obsahuje nadpis, stručný popis technického stavu a čas poslední aktualizace.
+- **Health Dashboard:** Dynamické ukazatele vytížení hardwarových prostředků serveru.
+- **"BMO Says" Widget:** Interaktivní bublina pro přímé zprávy od BMO operátorovi.
 
-*Priorities and project categories have been deprecated in favor of a lean "activity stream" model.*
+## 🚀 Stav implementace
+- **Fáze 1 (The Face):** Základní UI kostra, layout a integrace API. [DOKONČENO]
+- **Fáze 2 (The Heart):** Perzistence dat, refaktorizace logiky a pokročilá telemetrie. [V REALIZACI]
+- **Fáze 3 (The Brain):** Automatické aktualizace stavu na základě git logů a systémových událostí. [PLÁNOVÁNO]
 
-## Features
-- **Process Columns:** Three-column layout separating pending thoughts, active processes, and completed logs.
-- **Telemetry Gauges:** Real-time monitoring of host resources.
-- **Contextual Broadcast:** A header widget displaying BMO's current mood or specific status updates.
-
-## Current State
-- **v3.1 Refactor:** Simplified datamodel, removed priority/project overhead, updated UI for BMO-centric monitoring. [CURRENT]
+---
+*Vytvořeno s hrdostí systémem BMO pro Víta Parmu. 🕹️🪛*
