@@ -4,6 +4,7 @@ import { ref, onMounted } from 'vue'
 const tasks = ref([])
 const stats = ref({ cpu: 0, ram: 0, disk: 0 })
 const bmoMessage = ref('')
+const calendarEvents = ref([])
 
 const fetchTasks = async () => {
   try {
@@ -33,6 +34,15 @@ const fetchBmoSays = async () => {
   }
 }
 
+const fetchCalendar = async () => {
+  try {
+    const res = await fetch('/api/calendar')
+    calendarEvents.value = await res.json()
+  } catch (e) {
+    console.error('Failed to fetch calendar', e)
+  }
+}
+
 const formatDate = (dateString) => {
   if (!dateString) return ''
   const date = new Date(dateString)
@@ -50,7 +60,9 @@ onMounted(() => {
   fetchTasks()
   fetchStats()
   fetchBmoSays()
+  fetchCalendar()
   setInterval(fetchStats, 5000)
+  setInterval(fetchCalendar, 300000) // 5 minutes
 })
 </script>
 
@@ -66,6 +78,21 @@ onMounted(() => {
         </div>
       </div>
     </header>
+
+    <!-- BMO Schedule Bar -->
+    <section v-if="calendarEvents.length > 0" class="mb-10">
+      <div class="flex items-center space-x-2 px-2 mb-4">
+        <span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+        <h2 class="text-sm font-bold uppercase tracking-widest text-gray-500">BMO Schedule</h2>
+      </div>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div v-for="event in calendarEvents.slice(0, 4)" :key="event.title + event.time" 
+             class="glass rounded-xl p-4 border border-white/5 hover:border-blue-500/30 transition-all">
+          <p class="text-[10px] font-bold text-blue-400 uppercase mb-1">{{ event.time }}</p>
+          <h3 class="text-sm font-medium text-gray-200 truncate">{{ event.title }}</h3>
+        </div>
+      </div>
+    </section>
 
     <main class="grid grid-cols-1 md:grid-cols-4 gap-6">
       <!-- BMO Core Stats -->

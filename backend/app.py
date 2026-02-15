@@ -6,11 +6,14 @@ import os
 import sqlite3
 import datetime
 import time
+import caldav
+from caldav.elements import dav
 
 app = Flask(__name__, static_folder='../frontend/dist')
 CORS(app)
 
 DB_PATH = os.path.join(os.path.dirname(__file__), 'bmo_dashboard.db')
+AUTH_PATH = os.path.join(os.path.dirname(__file__), 'calendar_auth.json')
 
 def get_db_connection():
     conn = sqlite3.connect(DB_PATH)
@@ -70,11 +73,20 @@ def add_activity():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
-@app.route('/api/activities/<int:id>', methods=['DELETE'])
-def delete_activity(id):
+@app.route('/api/activities/<int:id>/status', methods=['PATCH'])
+def update_activity_status(id):
     try:
+        data = request.json
+        status = data.get('status')
+        if status not in ('Pending', 'Active', 'Completed'):
+            return jsonify({"status": "error", "message": "Invalid status"}), 400
+
         conn = get_db_connection()
-        conn.execute('DELETE FROM activities WHERE id = ?', (id,))
+        conn.execute('''
+            UPDATE activities 
+            SET status = ?, last_updated = ?
+            WHERE id = ?
+        ''', (status, datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), id))
         conn.commit()
         conn.close()
         return jsonify({"status": "success"})
@@ -112,6 +124,73 @@ def bmo_says():
     return jsonify({
         "message": "Vítku, system is running smoothly. Phase 2: The Heart is now pulsing! 🤖💓"
     })
+
+@app.route('/api/calendar', methods=['GET'])
+def get_calendar():
+    try:
+        with open(AUTH_PATH, 'r') as f:
+            auth = json.load(f)
+        
+        username = auth.get('email')
+        password = auth.get('password')
+        url = "https://caldav.icloud.com"
+
+        client = caldav.DAVClient(url, username=username, password=password)
+        principal = client.principal()
+        calendars = principal.calendars()
+        
+        if not calendars:
+            return jsonify([])
+
+        now = datetime.datetime.now()
+        end = now + datetime.timedelta(days=7)
+        
+        all_events = []
+        for calendar in calendars:
+            events = calendar.date_search(start=now, end=end, expand=True)
+            for event in events:
+                vobj = event.vobject_instance.vevent
+                
+                summary = vobj.summary.value if hasattr(vobj, 'summary') else 'No Title'
+                
+                # Handle start time
+                start_dt = vobj.dtstart.value
+                is_all_day = not isinstance(start_dt, datetime.datetime)
+                
+                if isinstance(start_dt, datetime.datetime):
+                    # Localize if it's naive (iCloud usually sends TZ aware, but just in case)
+                    start_time = start_dt.strftime('%H:%M')
+                    sort_key = start_dt.timestamp()
+                else:
+                    # Date object (all day)
+                    start_time = "Celý den"
+                    # Sort all day events at the beginning of the day
+                    sort_key = datetime.datetime.combine(start_dt, datetime.time.min).timestamp()
+
+                all_events.append({
+                    "title": summary,
+                    "time": start_time,
+                    "allDay": is_all_day,
+                    "sort_key": sort_key
+                })
+
+        # Sort by time and take top 10 (Frontend will slice to 3-4)
+        all_events.sort(key=lambda x: x['sort_key'])
+        
+        # Remove duplicates (sometimes multiple calendars or weird iCloud things)
+        seen = set()
+        unique_events = []
+        for e in all_events:
+            identifier = f"{e['title']}-{e['time']}"
+            if identifier not in seen:
+                seen.add(identifier)
+                unique_events.append(e)
+
+        return jsonify(unique_events[:10])
+
+    except Exception as e:
+        print(f"Calendar error: {e}")
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 # Serve Frontend
 @app.route('/', defaults={'path': ''})
