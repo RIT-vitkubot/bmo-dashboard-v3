@@ -33,6 +33,19 @@ const fetchBmoSays = async () => {
   }
 }
 
+const formatDate = (dateString) => {
+  if (!dateString) return ''
+  const date = new Date(dateString)
+  if (isNaN(date.getTime())) return dateString // Fallback to raw string if invalid
+  const pad = (num) => String(num).padStart(2, '0')
+  const yyyy = date.getFullYear()
+  const mm = pad(date.getMonth() + 1)
+  const dd = pad(date.getDate())
+  const hh = pad(date.getHours())
+  const min = pad(date.getMinutes())
+  return `${yyyy}-${mm}-${dd} ${hh}:${min}`
+}
+
 onMounted(() => {
   fetchTasks()
   fetchStats()
@@ -105,7 +118,7 @@ onMounted(() => {
               <h4 class="text-sm font-medium text-gray-200">{{ task.title }}</h4>
               <p class="text-xs text-gray-500 leading-relaxed">{{ task.description }}</p>
               <div class="flex items-center mt-1">
-                <span class="text-[10px] text-gray-600 font-mono uppercase tracking-tighter">Updated: {{ task.last_updated }}</span>
+                <span class="text-[10px] text-gray-600 font-mono uppercase tracking-tighter">Updated: {{ formatDate(task.last_updated) }}</span>
               </div>
             </div>
           </div>
@@ -126,7 +139,7 @@ onMounted(() => {
                 </div>
               </div>
               <div class="flex items-center mt-1">
-                <span class="text-[10px] text-blue-400/50 font-mono uppercase tracking-tighter">Live Since: {{ task.last_updated }}</span>
+                <span class="text-[10px] text-blue-400/50 font-mono uppercase tracking-tighter">Live Since: {{ formatDate(task.last_updated) }}</span>
               </div>
             </div>
           </div>
@@ -145,7 +158,7 @@ onMounted(() => {
               </h4>
               <p class="text-xs text-gray-500 leading-relaxed">{{ task.description }}</p>
               <div class="flex items-center mt-1">
-                <span class="text-[10px] text-green-900 font-mono uppercase tracking-tighter">Logged: {{ task.last_updated }}</span>
+                <span class="text-[10px] text-green-900 font-mono uppercase tracking-tighter">Logged: {{ formatDate(task.last_updated) }}</span>
               </div>
             </div>
           </div>
