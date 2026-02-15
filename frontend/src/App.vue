@@ -7,7 +7,7 @@ const bmoMessage = ref('')
 
 const fetchTasks = async () => {
   try {
-    const res = await fetch('http://localhost:5000/api/tasks')
+    const res = await fetch('/api/tasks')
     tasks.value = await res.json()
   } catch (e) {
     console.error('Failed to fetch tasks', e)
@@ -16,7 +16,7 @@ const fetchTasks = async () => {
 
 const fetchStats = async () => {
   try {
-    const res = await fetch('http://localhost:5000/api/stats')
+    const res = await fetch('/api/stats')
     stats.value = await res.json()
   } catch (e) {
     console.error('Failed to fetch stats', e)
@@ -25,7 +25,7 @@ const fetchStats = async () => {
 
 const fetchBmoSays = async () => {
   try {
-    const res = await fetch('http://localhost:5000/api/bmo-says')
+    const res = await fetch('/api/bmo-says')
     const data = await res.json()
     bmoMessage.value = data.message
   } catch (e) {
@@ -63,7 +63,7 @@ const getPriorityColor = (priority) => {
       </div>
     </header>
 
-    <main class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <main class="grid grid-cols-1 md:grid-cols-4 gap-6">
       <!-- System Stats -->
       <section class="md:col-span-1 space-y-6">
         <h2 class="text-sm font-bold uppercase tracking-widest text-gray-500 px-2">System Health</h2>
@@ -98,26 +98,67 @@ const getPriorityColor = (priority) => {
         </div>
       </section>
 
-      <!-- Task List -->
-      <section class="md:col-span-2 space-y-6">
+      <!-- Mission Control -->
+      <section class="md:col-span-3 space-y-6">
         <h2 class="text-sm font-bold uppercase tracking-widest text-gray-500 px-2">Mission Control</h2>
-        <div class="grid grid-cols-1 gap-4">
-          <div v-for="task in tasks" :key="task.id" class="glass rounded-2xl p-4 flex items-center justify-between group hover:bg-white/5 transition-colors">
-            <div class="flex items-center space-x-4">
-              <div :class="['w-2 h-10 rounded-full', 
-                task.status === 'Done' ? 'bg-green-500' : 
-                task.status === 'In Progress' ? 'bg-apple-blue' : 'bg-gray-600']"></div>
-              <div>
-                <h3 class="font-medium">{{ task.title }}</h3>
-                <div class="flex items-center space-x-2 text-xs text-gray-500">
-                  <span :class="getPriorityColor(task.priority)">{{ task.priority }}</span>
-                  <span>•</span>
-                  <span>{{ task.project }}</span>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <!-- ToDo Column -->
+          <div class="space-y-4">
+            <div class="flex items-center justify-between px-2">
+              <h3 class="text-xs font-bold text-gray-500 uppercase">To Do</h3>
+              <span class="text-xs bg-white/10 px-2 py-0.5 rounded-full text-gray-400">{{ tasks.filter(t => t.status === 'ToDo').length }}</span>
+            </div>
+            <div v-for="task in tasks.filter(t => t.status === 'ToDo')" :key="task.id" 
+                 class="glass rounded-2xl p-4 space-y-3 group hover:bg-white/5 transition-all">
+              <div class="flex justify-between items-start">
+                <span :class="['text-[10px] font-bold px-2 py-0.5 rounded-md bg-white/5', getPriorityColor(task.priority)]">
+                  {{ task.priority }}
+                </span>
+                <span class="text-[10px] text-gray-500">{{ task.project }}</span>
+              </div>
+              <h4 class="font-medium text-sm">{{ task.title }}</h4>
+            </div>
+          </div>
+
+          <!-- In Progress Column -->
+          <div class="space-y-4">
+            <div class="flex items-center justify-between px-2">
+              <h3 class="text-xs font-bold text-apple-blue uppercase">In Progress</h3>
+              <span class="text-xs bg-apple-blue/20 px-2 py-0.5 rounded-full text-apple-blue">{{ tasks.filter(t => t.status === 'In Progress').length }}</span>
+            </div>
+            <div v-for="task in tasks.filter(t => t.status === 'In Progress')" :key="task.id" 
+                 class="glass rounded-2xl p-4 space-y-3 border-apple-blue/30 shadow-[0_0_15px_rgba(0,122,255,0.1)] group hover:bg-white/5 transition-all">
+              <div class="flex justify-between items-start">
+                <span :class="['text-[10px] font-bold px-2 py-0.5 rounded-md bg-white/5', getPriorityColor(task.priority)]">
+                  {{ task.priority }}
+                </span>
+                <span class="text-[10px] text-gray-500">{{ task.project }}</span>
+              </div>
+              <h4 class="font-medium text-sm">{{ task.title }}</h4>
+              <div class="pt-1">
+                <div class="w-full bg-apple-blue/10 rounded-full h-1">
+                  <div class="bg-apple-blue h-1 rounded-full w-1/2 animate-pulse"></div>
                 </div>
               </div>
             </div>
-            <div class="text-xs font-semibold px-3 py-1 rounded-full bg-white/10 uppercase">
-              {{ task.status }}
+          </div>
+
+          <!-- Done Column -->
+          <div class="space-y-4">
+            <div class="flex items-center justify-between px-2">
+              <h3 class="text-xs font-bold text-green-500/70 uppercase">Done</h3>
+              <span class="text-xs bg-green-500/10 px-2 py-0.5 rounded-full text-green-500/50">{{ tasks.filter(t => t.status === 'Done').length }}</span>
+            </div>
+            <div v-for="task in tasks.filter(t => t.status === 'Done')" :key="task.id" 
+                 class="glass rounded-2xl p-4 space-y-3 opacity-60 grayscale-[0.5] group hover:bg-white/5 transition-all">
+              <div class="flex justify-between items-start">
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-white/5 text-gray-500">
+                  {{ task.priority }}
+                </span>
+                <span class="text-[10px] text-gray-500">{{ task.project }}</span>
+              </div>
+              <h4 class="font-medium text-sm line-through text-gray-400">{{ task.title }}</h4>
             </div>
           </div>
         </div>

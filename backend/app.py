@@ -1,10 +1,10 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, send_from_directory
 from flask_cors import CORS
 import json
 import psutil
 import os
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='../frontend/dist')
 CORS(app)
 
 TASKS_FILE = os.path.join(os.path.dirname(__file__), '..', 'tasks.json')
@@ -21,7 +21,7 @@ def get_tasks():
 @app.route('/api/stats', methods=['GET'])
 def get_stats():
     return jsonify({
-        "cpu": psutil.cpu_percent(interval=1),
+        "cpu": psutil.cpu_percent(interval=None),
         "ram": psutil.virtual_memory().percent,
         "disk": psutil.disk_usage('/').percent
     })
@@ -33,5 +33,14 @@ def bmo_says():
         "message": "Vítku, you've been working on the Dashboard for a while. Don't forget to hydrate! 🕹️💧"
     })
 
+# Serve Frontend
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def serve(path):
+    if path != "" and os.path.exists(os.path.join(app.static_folder, path)):
+        return send_from_directory(app.static_folder, path)
+    else:
+        return send_from_directory(app.static_folder, 'index.html')
+
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5001)
