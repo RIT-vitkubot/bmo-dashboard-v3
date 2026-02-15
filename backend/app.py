@@ -246,6 +246,54 @@ def get_calendar():
         print(f"Calendar error: {e}")
         return jsonify({"status": "error", "message": str(e)}), 500
 
+@app.route('/api/schedule', methods=['GET'])
+def get_schedule():
+    try:
+        # Get cron jobs from OpenClaw
+        output = subprocess.check_output(
+            ['openclaw', 'cron', 'list', '--json'],
+            stderr=subprocess.STDOUT
+        ).decode('utf-8')
+        
+        data = json.loads(output)
+        jobs = data.get('jobs', [])
+        
+        schedule = []
+        now_ms = time.time() * 1000
+        
+        for job in jobs:
+            next_run_ms = job.get('state', {}).get('nextRunAtMs')
+            if not next_run_ms:
+                continue
+            
+            # Calculate relative time or format absolute time
+            diff_ms = next_run_ms - now_ms
+            
+            if diff_ms < 0:
+                time_str = "soon"
+            elif diff_ms < 3600000: # < 1h
+                time_str = f"in {int(diff_ms / 60000)}m"
+            elif diff_ms < 86400000: # < 24h
+                time_str = f"in {int(diff_ms / 3600000)}h"
+            else:
+                dt = datetime.datetime.fromtimestamp(next_run_ms / 1000)
+                time_str = dt.strftime('%a %H:%M')
+
+            schedule.append({
+                "name": job.get('name', 'Unnamed Job'),
+                "time": time_str,
+                "status": "Enabled" if job.get('enabled') else "Disabled",
+                "next_run_ms": next_run_ms
+            })
+        
+        # Sort by next run
+        schedule.sort(key=lambda x: x['next_run_ms'])
+        
+        return jsonify(schedule)
+    except Exception as e:
+        print(f"Schedule error: {e}")
+        return jsonify({"status": "error", "message": str(e)}), 500
+
 # Serve Frontend
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')

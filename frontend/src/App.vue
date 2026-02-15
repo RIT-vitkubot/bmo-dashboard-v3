@@ -4,7 +4,7 @@ import { ref, onMounted } from 'vue'
 const tasks = ref([])
 const stats = ref({ cpu: 0, ram: 0, disk: 0 })
 const bmoMessage = ref('')
-const calendarEvents = ref([])
+const scheduleEvents = ref([])
 
 const fetchTasks = async () => {
   try {
@@ -34,12 +34,12 @@ const fetchBmoSays = async () => {
   }
 }
 
-const fetchCalendar = async () => {
+const fetchSchedule = async () => {
   try {
-    const res = await fetch('/api/calendar')
-    calendarEvents.value = await res.json()
+    const res = await fetch('/api/schedule')
+    scheduleEvents.value = await res.json()
   } catch (e) {
-    console.error('Failed to fetch calendar', e)
+    console.error('Failed to fetch schedule', e)
   }
 }
 
@@ -78,12 +78,12 @@ onMounted(() => {
   fetchTasks()
   fetchStats()
   fetchBmoSays()
-  fetchCalendar()
+  fetchSchedule()
   
   // Polling intervals per requirements
   setInterval(fetchStats, 5000)      // stats 5s
   setInterval(fetchTasks, 30000)     // activities 30s
-  setInterval(fetchCalendar, 300000) // calendar 5min
+  setInterval(fetchSchedule, 300000) // schedule 5min
   setInterval(fetchBmoSays, 60000)    // BMO says 1min
 })
 </script>
@@ -102,17 +102,19 @@ onMounted(() => {
     </header>
 
     <!-- BMO Schedule Bar -->
-    <section v-if="calendarEvents.length > 0" class="mb-10">
+    <section v-if="scheduleEvents.length > 0" class="mb-10">
       <div class="flex items-center space-x-2 px-2 mb-4">
         <span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
-        <h2 class="text-sm font-bold uppercase tracking-widest text-gray-500">BMO Schedule</h2>
+        <h2 class="text-sm font-bold uppercase tracking-widest text-gray-500">BMO Internal Cron Schedule</h2>
       </div>
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div v-for="event in calendarEvents.slice(0, 4)" :key="event.title + event.time" 
-             class="glass rounded-xl p-4 border border-white/5 transition-all"
-             :class="getCalBorder(event.calendar)">
-          <p class="text-[10px] font-bold uppercase mb-1" :class="getCalColor(event.calendar)">{{ event.time }}</p>
-          <h3 class="text-sm font-medium text-gray-200 truncate">{{ event.title }}</h3>
+        <div v-for="job in scheduleEvents.slice(0, 4)" :key="job.name + job.time" 
+             class="glass rounded-xl p-4 border border-white/5 transition-all hover:border-blue-500/30">
+          <div class="flex items-center space-x-1 mb-1">
+            <span class="text-[10px]">🕒</span>
+            <p class="text-[10px] font-bold uppercase text-blue-400">{{ job.time }}</p>
+          </div>
+          <h3 class="text-sm font-medium text-gray-200 truncate">{{ job.name }}</h3>
         </div>
       </div>
     </section>
