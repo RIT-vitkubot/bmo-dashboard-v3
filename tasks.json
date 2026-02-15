@@ -1,6 +1,30 @@
 [
-  {"id": 1, "title": "Implementace minimalistického UI", "status": "In Progress"},
-  {"id": 2, "title": "Příprava backendu pro monitoring", "status": "Done"},
-  {"id": 3, "title": "Integrace sledování aktivit", "status": "ToDo"},
-  {"id": 4, "title": "Optimalizace datového modelu", "status": "In Progress"}
+  {
+    "id": 1,
+    "title": "Implementace minimalistického UI",
+    "description": "Vytvoření nového Glassmorphism designu pro hlavní panel.",
+    "status": "In Progress",
+    "last_updated": "2026-02-15 17:45"
+  },
+  {
+    "id": 2,
+    "title": "Příprava backendu pro monitoring",
+    "description": "Nastavení Python FastAPI a sběru systémových metrik.",
+    "status": "Done",
+    "last_updated": "2026-02-14 20:10"
+  },
+  {
+    "id": 3,
+    "title": "Integrace sledování aktivit",
+    "description": "Propojení frontendových komponent s backend API.",
+    "status": "ToDo",
+    "last_updated": "2026-02-15 10:00"
+  },
+  {
+    "id": 4,
+    "title": "Optimalizace datového modelu",
+    "description": "Refaktorování tasks.json a zlepšení výkonu dotazů.",
+    "status": "In Progress",
+    "last_updated": "2026-02-15 16:30"
+  }
 ]

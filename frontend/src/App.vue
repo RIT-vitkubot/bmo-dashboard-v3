@@ -101,8 +101,12 @@ onMounted(() => {
               <span class="text-xs bg-white/10 px-2 py-0.5 rounded-full text-gray-400 font-mono">{{ tasks.filter(t => t.status === 'ToDo').length }}</span>
             </div>
             <div v-for="task in tasks.filter(t => t.status === 'ToDo')" :key="task.id" 
-                 class="glass rounded-xl p-4 border border-white/5 group hover:border-white/20 transition-all">
-              <h4 class="text-sm text-gray-200">{{ task.title }}</h4>
+                 class="glass rounded-xl p-4 border border-white/5 group hover:border-white/20 transition-all flex flex-col gap-2">
+              <h4 class="text-sm font-medium text-gray-200">{{ task.title }}</h4>
+              <p class="text-xs text-gray-500 leading-relaxed">{{ task.description }}</p>
+              <div class="flex items-center mt-1">
+                <span class="text-[10px] text-gray-600 font-mono uppercase tracking-tighter">Updated: {{ task.last_updated }}</span>
+              </div>
             </div>
           </div>
 
@@ -113,12 +117,16 @@ onMounted(() => {
               <span class="text-xs bg-blue-500/20 px-2 py-0.5 rounded-full text-blue-400 font-mono">{{ tasks.filter(t => t.status === 'In Progress').length }}</span>
             </div>
             <div v-for="task in tasks.filter(t => t.status === 'In Progress')" :key="task.id" 
-                 class="glass rounded-xl p-4 border border-blue-500/30 shadow-[0_0_15px_rgba(59,130,246,0.1)] group hover:bg-blue-500/5 transition-all">
-              <h4 class="font-medium text-sm text-blue-50">{{ task.title }}</h4>
-              <div class="pt-3">
+                 class="glass rounded-xl p-4 border border-blue-500/30 shadow-[0_0_15px_rgba(59,130,246,0.1)] group hover:bg-blue-500/5 transition-all flex flex-col gap-2">
+              <h4 class="font-semibold text-sm text-blue-50">{{ task.title }}</h4>
+              <p class="text-xs text-blue-200/60 leading-relaxed">{{ task.description }}</p>
+              <div class="pt-1">
                 <div class="w-full bg-blue-900/30 rounded-full h-1">
                   <div class="bg-blue-400 h-1 rounded-full w-2/3 animate-[pulse_2s_infinite]"></div>
                 </div>
+              </div>
+              <div class="flex items-center mt-1">
+                <span class="text-[10px] text-blue-400/50 font-mono uppercase tracking-tighter">Live Since: {{ task.last_updated }}</span>
               </div>
             </div>
           </div>
@@ -130,11 +138,15 @@ onMounted(() => {
               <span class="text-xs bg-green-500/10 px-2 py-0.5 rounded-full text-green-500/50 font-mono">{{ tasks.filter(t => t.status === 'Done').length }}</span>
             </div>
             <div v-for="task in tasks.filter(t => t.status === 'Done')" :key="task.id" 
-                 class="glass rounded-xl p-4 border border-white/5 opacity-50 hover:opacity-80 transition-all">
-              <h4 class="text-sm text-gray-400 flex items-center">
-                <span class="mr-2 text-green-500/50">✓</span>
+                 class="glass rounded-xl p-4 border border-white/5 opacity-50 hover:opacity-100 transition-all flex flex-col gap-2">
+              <h4 class="text-sm text-gray-300 flex items-center font-medium">
+                <span class="mr-2 text-green-500/50 text-xs">✓</span>
                 {{ task.title }}
               </h4>
+              <p class="text-xs text-gray-500 leading-relaxed">{{ task.description }}</p>
+              <div class="flex items-center mt-1">
+                <span class="text-[10px] text-green-900 font-mono uppercase tracking-tighter">Logged: {{ task.last_updated }}</span>
+              </div>
             </div>
           </div>
         </div>
