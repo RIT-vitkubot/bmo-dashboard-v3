@@ -5,11 +5,20 @@ const tasks = ref([])
 const stats = ref({ cpu: 0, ram: 0, disk: 0 })
 const bmoMessage = ref('')
 const scheduleEvents = ref([])
+const isUpdating = ref(false)
+
+const triggerFlash = () => {
+  isUpdating.value = true
+  setTimeout(() => {
+    isUpdating.value = false
+  }, 1000)
+}
 
 const fetchTasks = async () => {
   try {
     const res = await fetch('/api/activities')
     tasks.value = await res.json()
+    triggerFlash()
   } catch (e) {
     console.error('Failed to fetch tasks', e)
   }
@@ -19,6 +28,7 @@ const fetchStats = async () => {
   try {
     const res = await fetch('/api/stats')
     stats.value = await res.json()
+    // stats are fetched every 5s, maybe only flash on significant changes or just a subtle indicator
   } catch (e) {
     console.error('Failed to fetch stats', e)
   }
@@ -173,7 +183,7 @@ onMounted(() => {
         
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <!-- Pending Activity -->
-          <div class="space-y-4">
+          <div class="space-y-4" :class="{ 'update-flash': isUpdating }">
             <div class="flex items-center justify-between px-2 border-b border-white/5 pb-2">
               <h3 class="text-xs font-bold text-gray-500 uppercase">Pending</h3>
               <span class="text-xs bg-white/10 px-2 py-0.5 rounded-full text-gray-400 font-mono">{{ tasks.filter(t => t.status === 'Pending').length }}</span>
@@ -190,7 +200,7 @@ onMounted(() => {
           </div>
 
           <!-- Active Processes -->
-          <div class="space-y-4">
+          <div class="space-y-4" :class="{ 'update-flash': isUpdating }">
             <div class="flex items-center justify-between px-2 border-b border-blue-500/20 pb-2">
               <h3 class="text-xs font-bold text-blue-400 uppercase">Active</h3>
               <span class="text-xs bg-blue-500/20 px-2 py-0.5 rounded-full text-blue-400 font-mono">{{ tasks.filter(t => t.status === 'Active').length }}</span>
@@ -212,7 +222,7 @@ onMounted(() => {
           </div>
 
           <!-- Completed Logs -->
-          <div class="space-y-4">
+          <div class="space-y-4" :class="{ 'update-flash': isUpdating }">
             <div class="flex items-center justify-between px-2 border-b border-green-500/20 pb-2">
               <h3 class="text-xs font-bold text-green-500/70 uppercase">Completed</h3>
               <span class="text-xs bg-green-500/10 px-2 py-0.5 rounded-full text-green-500/50 font-mono">{{ tasks.filter(t => t.status === 'Completed').length }}</span>
@@ -242,5 +252,14 @@ onMounted(() => {
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.update-flash {
+  animation: flash-border 1s ease-out;
+}
+
+@keyframes flash-border {
+  0% { border-color: rgba(59, 130, 246, 0.5); box-shadow: 0 0 15px rgba(59, 130, 246, 0.2); }
+  100% { border-color: rgba(255, 255, 255, 0.05); box-shadow: none; }
 }
 </style>
