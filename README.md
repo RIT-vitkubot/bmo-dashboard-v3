@@ -1,24 +1,29 @@
-# BMO Dashboard v3
+# BMO Status Monitor (Dashboard v3)
 
 ## Project Overview
-BMO Dashboard v3 is an intelligent command center designed to provide real-time visualization of BMO's internal state, active tasks, and system health. The primary objective of this application is to provide the human operator (Vít Parma) with transparency into BMO's current activities, planned work, and completed objectives.
+BMO Status Monitor is a minimalist command center designed to provide real-time visualization of BMO's internal computational state and current activities. This application is specifically tailored to monitor BMO's work, providing the human operator with transparency into what BMO is doing right now.
 
 ## Core Objectives
-- **Operational Transparency:** Real-time visibility into BMO's task queue.
-- **System Monitoring:** Live telemetry of the host Ubuntu server (CPU, RAM, Disk).
-- **Proactive Communication:** Direct interface for BMO's contextual suggestions and status updates.
+- **Activity Monitoring:** Real-time visibility into BMO's current, pending, and completed tasks.
+- **BMO Core Health:** Live telemetry of BMO's computational environment (CPU, RAM, Disk).
+- **Status Communication:** A dedicated channel for BMO to broadcast contextual messages and internal thoughts.
 
 ## Technical Stack
 - **Backend:** Flask (Python) with `psutil` for system telemetry.
-- **Frontend:** Vue.js 3 + Tailwind CSS for a modern, reactive UI.
-- **Design Language:** Glassmorphism with True Dark Mode, focusing on high legibility and Apple-style minimalism.
-- **State Management:** Real-time updates via WebSockets (planned) and periodic API polling.
+- **Frontend:** Vue.js 3 + Tailwind CSS (Vite).
+- **Design:** Minimalist Glassmorphism, True Dark Mode, focusing on high-density information without clutter.
+
+## Data Model (Minimalist)
+To maintain focus and speed, the data model has been simplified to its core components:
+- **Activity Name:** What is being worked on.
+- **Status:** The lifecycle state (Pending, Active, Completed).
+
+*Priorities and project categories have been deprecated in favor of a lean "activity stream" model.*
 
 ## Features
-- **Task Visualization:** A three-column Trello-style layout showing BMO's status (ToDo, In Progress, Done).
-- **System Health Gauges:** Real-time monitoring of host resources.
-- **"BMO Says" Widget:** Context-aware status messages and alerts.
+- **Process Columns:** Three-column layout separating pending thoughts, active processes, and completed logs.
+- **Telemetry Gauges:** Real-time monitoring of host resources.
+- **Contextual Broadcast:** A header widget displaying BMO's current mood or specific status updates.
 
-## Implementation Status
-- **Phase 1 (The Face):** Core UI skeleton, layout, and basic API integration. [COMPLETED]
-- **Phase 2 (The Heart):** Persistence layer and enhanced system telemetry. [IN PROGRESS]
+## Current State
+- **v3.1 Refactor:** Simplified datamodel, removed priority/project overhead, updated UI for BMO-centric monitoring. [CURRENT]

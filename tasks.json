@@ -1,6 +1,6 @@
 [
-  {"id": 1, "title": "Implement Phase 1 UI", "status": "In Progress", "priority": "HIGH", "project": "Dashboard v3"},
-  {"id": 2, "title": "Setup Flask Backend", "status": "Done", "priority": "NORMAL", "project": "Dashboard v3"},
-  {"id": 3, "title": "Integrate GitHub API", "status": "ToDo", "priority": "LOW", "project": "Dashboard v3"},
-  {"id": 4, "title": "Write Master's Thesis", "status": "ToDo", "priority": "CRITICAL", "project": "Maturitní práce"}
+  {"id": 1, "title": "Implementace minimalistického UI", "status": "In Progress"},
+  {"id": 2, "title": "Příprava backendu pro monitoring", "status": "Done"},
+  {"id": 3, "title": "Integrace sledování aktivit", "status": "ToDo"},
+  {"id": 4, "title": "Optimalizace datového modelu", "status": "In Progress"}
 ]
