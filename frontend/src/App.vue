@@ -7,7 +7,7 @@ const bmoMessage = ref('')
 
 const fetchTasks = async () => {
   try {
-    const res = await fetch('/api/tasks')
+    const res = await fetch('/api/activities')
     tasks.value = await res.json()
   } catch (e) {
     console.error('Failed to fetch tasks', e)
@@ -99,6 +99,19 @@ onMounted(() => {
               <div class="bg-green-500 h-1.5 rounded-full transition-all duration-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]" :style="{ width: stats.disk + '%' }"></div>
             </div>
           </div>
+          <div class="pt-4 border-t border-white/5 space-y-4">
+            <div class="flex justify-between items-center">
+              <span class="text-sm font-medium text-gray-400">Server Uptime</span>
+              <span class="text-sm font-mono text-blue-400">{{ stats.uptime || '0:00:00' }}</span>
+            </div>
+            <div v-if="stats.vpn && Object.keys(stats.vpn).length > 0" class="space-y-2">
+              <h3 class="text-[10px] font-bold uppercase text-gray-600 tracking-widest">Active Tunnels</h3>
+              <div v-for="(net, iface) in stats.vpn" :key="iface" class="flex items-center justify-between bg-white/5 p-2 rounded-lg border border-white/5">
+                <span class="text-xs font-mono text-blue-300">{{ iface }}</span>
+                <span class="text-[10px] text-green-500 font-bold">ONLINE</span>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -113,7 +126,7 @@ onMounted(() => {
               <h3 class="text-xs font-bold text-gray-500 uppercase">Pending</h3>
               <span class="text-xs bg-white/10 px-2 py-0.5 rounded-full text-gray-400 font-mono">{{ tasks.filter(t => t.status === 'ToDo').length }}</span>
             </div>
-            <div v-for="task in tasks.filter(t => t.status === 'ToDo')" :key="task.id" 
+            <div v-for="task in tasks.filter(t => t.status === 'Pending')" :key="task.id" 
                  class="glass rounded-xl p-4 border border-white/5 group hover:border-white/20 transition-all flex flex-col gap-2">
               <h4 class="text-sm font-medium text-gray-200">{{ task.title }}</h4>
               <p class="text-xs text-gray-500 leading-relaxed">{{ task.description }}</p>
@@ -127,9 +140,9 @@ onMounted(() => {
           <div class="space-y-4">
             <div class="flex items-center justify-between px-2 border-b border-blue-500/20 pb-2">
               <h3 class="text-xs font-bold text-blue-400 uppercase">Active</h3>
-              <span class="text-xs bg-blue-500/20 px-2 py-0.5 rounded-full text-blue-400 font-mono">{{ tasks.filter(t => t.status === 'In Progress').length }}</span>
+              <span class="text-xs bg-blue-500/20 px-2 py-0.5 rounded-full text-blue-400 font-mono">{{ tasks.filter(t => t.status === 'Active').length }}</span>
             </div>
-            <div v-for="task in tasks.filter(t => t.status === 'In Progress')" :key="task.id" 
+            <div v-for="task in tasks.filter(t => t.status === 'Active')" :key="task.id" 
                  class="glass rounded-xl p-4 border border-blue-500/30 shadow-[0_0_15px_rgba(59,130,246,0.1)] group hover:bg-blue-500/5 transition-all flex flex-col gap-2">
               <h4 class="font-semibold text-sm text-blue-50">{{ task.title }}</h4>
               <p class="text-xs text-blue-200/60 leading-relaxed">{{ task.description }}</p>
@@ -148,9 +161,9 @@ onMounted(() => {
           <div class="space-y-4">
             <div class="flex items-center justify-between px-2 border-b border-green-500/20 pb-2">
               <h3 class="text-xs font-bold text-green-500/70 uppercase">Completed</h3>
-              <span class="text-xs bg-green-500/10 px-2 py-0.5 rounded-full text-green-500/50 font-mono">{{ tasks.filter(t => t.status === 'Done').length }}</span>
+              <span class="text-xs bg-green-500/10 px-2 py-0.5 rounded-full text-green-500/50 font-mono">{{ tasks.filter(t => t.status === 'Completed').length }}</span>
             </div>
-            <div v-for="task in tasks.filter(t => t.status === 'Done')" :key="task.id" 
+            <div v-for="task in tasks.filter(t => t.status === 'Completed')" :key="task.id" 
                  class="glass rounded-xl p-4 border border-white/5 opacity-50 hover:opacity-100 transition-all flex flex-col gap-2">
               <h4 class="text-sm text-gray-300 flex items-center font-medium">
                 <span class="mr-2 text-green-500/50 text-xs">✓</span>
