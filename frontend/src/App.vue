@@ -7,6 +7,26 @@ const bmoMessage = ref('')
 const scheduleEvents = ref([])
 const isUpdating = ref(false)
 
+// Token Usage
+const tokenStatus = ref({ used: 0, limit: 1000000, percentage: 0, status: 'OK' })
+const tokenDaily = ref([])
+const tokenModels = ref([])
+
+const fetchTokenUsage = async () => {
+  try {
+    const [resStatus, resDaily, resModels] = await Promise.all([
+      fetch('/api/token-usage/status'),
+      fetch('/api/token-usage/daily'),
+      fetch('/api/token-usage/models')
+    ])
+    tokenStatus.value = await resStatus.json()
+    tokenDaily.value = await resDaily.json()
+    tokenModels.value = await resModels.json()
+  } catch (e) {
+    console.error('Failed to fetch token usage', e)
+  }
+}
+
 const triggerFlash = () => {
   isUpdating.value = true
   setTimeout(() => {
@@ -89,12 +109,14 @@ onMounted(() => {
   fetchStats()
   fetchBmoSays()
   fetchSchedule()
+  fetchTokenUsage()
   
   // Polling intervals per requirements
   setInterval(fetchStats, 5000)      // stats 5s
   setInterval(fetchTasks, 30000)     // activities 30s
   setInterval(fetchSchedule, 300000) // schedule 5min
   setInterval(fetchBmoSays, 60000)    // BMO says 1min
+  setInterval(fetchTokenUsage, 60000) // Token usage 1min
 })
 </script>
 
@@ -240,6 +262,59 @@ onMounted(() => {
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      <!-- Token Usage Monitor -->
+      <section class="md:col-span-4 mt-6">
+        <h2 class="text-sm font-bold uppercase tracking-widest text-gray-500 px-2 mb-4">Token Usage Monitor (Gemini)</h2>
+        <div class="glass rounded-3xl p-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- Status -->
+                <div class="space-y-4">
+                    <h3 class="text-xs font-bold text-gray-400 uppercase">Monthly Usage</h3>
+                    <div class="text-4xl font-mono" :class="tokenStatus.status === 'OK' ? 'text-green-400' : 'text-red-400'">
+                        {{ (tokenStatus.used || 0).toLocaleString() }} <span class="text-sm text-gray-600">tokens</span>
+                    </div>
+                    <div class="w-full bg-white/10 rounded-full h-2">
+                        <div class="h-2 rounded-full transition-all duration-1000" 
+                             :class="tokenStatus.status === 'OK' ? 'bg-green-500' : 'bg-red-500'"
+                             :style="{ width: Math.min(tokenStatus.percentage || 0, 100) + '%' }"></div>
+                    </div>
+                    <div class="flex justify-between text-xs text-gray-500 font-mono">
+                        <span>{{ tokenStatus.percentage || 0 }}% of Limit</span>
+                        <span>{{ (tokenStatus.limit || 0).toLocaleString() }} Limit</span>
+                    </div>
+                </div>
+
+                <!-- Daily Chart (Simple CSS Bars) -->
+                <div class="space-y-4">
+                    <h3 class="text-xs font-bold text-gray-400 uppercase">Last 7 Days</h3>
+                    <div class="flex items-end space-x-2 h-32 border-b border-white/10 pb-2">
+                        <div v-for="day in tokenDaily" :key="day.date" class="flex-1 flex flex-col items-center group relative h-full justify-end">
+                             <!-- Tooltip -->
+                             <span class="absolute -top-8 bg-black text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 border border-white/20">
+                                {{ day.tokens.toLocaleString() }} tokens
+                             </span>
+                             <div class="w-full bg-blue-500/50 hover:bg-blue-400 rounded-t transition-all" 
+                                  :style="{ height: Math.max((day.tokens / (Math.max(...tokenDaily.map(d => d.tokens)) || 1)) * 100, 5) + '%' }"></div>
+                             <span class="text-[10px] text-gray-600 mt-1 font-mono truncate w-full text-center">{{ day.date.slice(5) }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Models Breakdown -->
+                <div class="space-y-4">
+                    <h3 class="text-xs font-bold text-gray-400 uppercase">Model Breakdown</h3>
+                    <div class="space-y-2">
+                        <div v-for="model in tokenModels" :key="model.model_name" class="flex items-center justify-between text-sm border-b border-white/5 pb-2">
+                            <span class="font-mono text-gray-300">{{ model.model_name }}</span>
+                            <span class="font-mono text-blue-400">{{ (model.tokens || 0).toLocaleString() }}</span>
+                        </div>
+                        <div v-if="tokenModels.length === 0" class="text-center text-gray-600 italic py-4">No usage data yet.</div>
+                    </div>
+                </div>
+            </div>
         </div>
       </section>
     </main>
