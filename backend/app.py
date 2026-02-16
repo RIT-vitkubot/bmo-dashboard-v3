@@ -11,6 +11,7 @@ import caldav
 from caldav.elements import dav
 from flask import Flask, jsonify, send_from_directory, request
 from flask_cors import CORS
+import gemini_service
 
 app = Flask(__name__, static_folder='../frontend/dist')
 CORS(app)
@@ -34,6 +35,20 @@ def init_db():
         description TEXT,
         status TEXT CHECK(status IN ('Pending', 'Active', 'Completed')) NOT NULL DEFAULT 'Pending',
         last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    ''')
+    
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS token_usage (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+        model_name TEXT NOT NULL,
+        prompt_tokens INTEGER,
+        completion_tokens INTEGER,
+        total_tokens INTEGER,
+        api_call_count INTEGER DEFAULT 1,
+        success BOOLEAN,
+        error_message TEXT
     )
     ''')
     conn.commit()
@@ -157,6 +172,15 @@ def bmo_says():
     conn = get_db_connection()
     active_count = conn.execute('SELECT COUNT(*) FROM activities WHERE status = "Active"').fetchone()[0]
     conn.close()
+
+    # Try Gemini if key exists
+    if os.environ.get('GEMINI_API_KEY'):
+        prompt = f"You are BMO from Adventure Time, a helpful robot assistant. The system uptime is {int(uptime_hours)} hours. There are {active_count} active tasks. Generate a very short (max 1 sentence), cute, encouraging message for your user 'Vítku'."
+        try:
+            message = gemini_service.call_gemini(prompt)
+            return jsonify({"message": message})
+        except Exception as e:
+            print(f"Gemini fallback: {e}")
 
     messages = [
         "Vítku, system is running smoothly. Phase 3: Intelligence is here! 🤖✨",
@@ -292,6 +316,96 @@ def get_schedule():
         return jsonify(schedule)
     except Exception as e:
         print(f"Schedule error: {e}")
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/api/token-usage/daily', methods=['GET'])
+def get_token_usage_daily():
+    try:
+        conn = get_db_connection()
+        # Last 7 days
+        query = '''
+            SELECT date(timestamp) as date, SUM(total_tokens) as tokens
+            FROM token_usage
+            WHERE timestamp >= date('now', '-6 days')
+            GROUP BY date(timestamp)
+            ORDER BY date(timestamp)
+        '''
+        rows = conn.execute(query).fetchall()
+        conn.close()
+        
+        # Fill in missing dates
+        data = {row['date']: row['tokens'] for row in rows}
+        result = []
+        for i in range(6, -1, -1):
+            d = (datetime.datetime.now() - datetime.timedelta(days=i)).strftime('%Y-%m-%d')
+            result.append({
+                "date": d,
+                "tokens": data.get(d, 0)
+            })
+            
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/api/token-usage/monthly', methods=['GET'])
+def get_token_usage_monthly():
+    try:
+        conn = get_db_connection()
+        # Current month
+        query = '''
+            SELECT SUM(total_tokens) as tokens
+            FROM token_usage
+            WHERE strftime('%Y-%m', timestamp) = strftime('%Y-%m', 'now')
+        '''
+        row = conn.execute(query).fetchone()
+        conn.close()
+        return jsonify({"month": datetime.datetime.now().strftime('%Y-%m'), "tokens": row['tokens'] or 0})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/api/token-usage/models', methods=['GET'])
+def get_token_usage_models():
+    try:
+        conn = get_db_connection()
+        query = '''
+            SELECT model_name, SUM(total_tokens) as tokens
+            FROM token_usage
+            GROUP BY model_name
+            ORDER BY tokens DESC
+        '''
+        rows = conn.execute(query).fetchall()
+        conn.close()
+        return jsonify([dict(row) for row in rows])
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/api/token-usage/status', methods=['GET'])
+def get_token_usage_status():
+    try:
+        limit = 1000000 # Configurable limit
+        conn = get_db_connection()
+        query = '''
+            SELECT SUM(total_tokens) as tokens
+            FROM token_usage
+            WHERE strftime('%Y-%m', timestamp) = strftime('%Y-%m', 'now')
+        '''
+        row = conn.execute(query).fetchone()
+        conn.close()
+        
+        used = row['tokens'] or 0
+        status = "OK"
+        if used > limit:
+            status = "Limit Exceeded"
+        elif used > limit * 0.8:
+            status = "Approaching Limit"
+            
+        return jsonify({
+            "status": status,
+            "used": used,
+            "limit": limit,
+            "percentage": round((used / limit) * 100, 2)
+        })
+    except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
 # Serve Frontend
