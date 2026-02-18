@@ -131,7 +131,6 @@ onMounted(() => {
     </section>
 
     <main class="grid grid-cols-1 md:grid-cols-4 gap-6">
-      <!-- BMO Core Stats -->
       <section class="md:col-span-1 space-y-6">
         <h2 class="text-sm font-bold uppercase tracking-widest text-gray-500 px-2">BMO Core Health</h2>
         <div class="glass rounded-3xl p-6 space-y-6">
@@ -176,6 +175,8 @@ onMounted(() => {
             </div>
           </div>
         </div>
+        <!-- Token Usage Monitor -->
+        <TokenUsageMonitor />
       </section>
 
       <!-- Activity Tracker -->
@@ -244,8 +245,6 @@ onMounted(() => {
         </div>
       </section>
 
-      <!-- Token Usage Monitor -->
-      <TokenUsageMonitor />
     </main>
   </div>
 </template>

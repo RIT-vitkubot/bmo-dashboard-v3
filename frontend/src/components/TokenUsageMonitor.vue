@@ -1,8 +1,8 @@
 <template>
-  <section class="md:col-span-4 mt-6">
+  <section class="space-y-6"> <!-- Removed md:col-span-4 mt-6 -->
     <h2 class="text-sm font-bold uppercase tracking-widest text-gray-500 px-2 mb-4">Token Usage Monitor (Gemini)</h2>
     <div class="glass rounded-3xl p-6">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div class="grid grid-cols-1 gap-8"> <!-- Changed md:grid-cols-3 to md:grid-cols-1 -->
             <!-- Status -->
             <div class="space-y-4">
                 <h3 class="text-xs font-bold text-gray-400 uppercase">Monthly Usage</h3>
